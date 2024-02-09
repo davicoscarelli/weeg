@@ -1,3 +1,8 @@
+
+<p align="center">
+  <img src="https://i.ibb.co/TRK4P9B/back1.png">
+</p>
+
 # Weeg
 
 Welcome to the updated README for Weeg, a pioneering educational platform engineered to close the digital education gap through innovative Mesh Network technology. Given the constraints of a purely hardware-based operation for our official setup, this document aims to guide users through understanding and evaluating The Hive platform and its underlying technology within a controlled software simulation.
