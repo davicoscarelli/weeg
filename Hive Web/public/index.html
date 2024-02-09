@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>weeg</title>
+    <style>
+        body, html {
+            font-family: 'Arial', sans-serif;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        #sidebar {
+            width: 50px;
+            background-color: #800080;
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #logo {
+        
+            width: 40px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        .icon {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            color: #800080;
+            cursor: pointer;
+        }
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: calc(100vw - 50px);
+        }
+        #chat {
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            height: 100%;
+            overflow-y: auto;
+            margin: 10px;
+            margin-bottom: 0px;
+        }
+        .message {
+            display: inline-block;
+            padding: 5px 25px;
+            margin-bottom: 10px;
+            border-radius: 15px;
+            background-color: #eee;
+            margin-right: 10px;
+            max-width: 80%;
+        }
+        .message.you {
+            background-color: #ddd;
+            align-self: flex-end;
+        }
+        .message.ai {
+            background-color: #800080;
+            align-self: flex-start;
+            color: #fff;
+        }
+        #input-area {
+            display: flex;
+        }
+        .input-field {
+            flex-grow: 1; 
+            padding: 10px;
+            margin: 10px;
+            width: 85%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            width: 10%;
+            background-color: #800080;
+            margin: 10px;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"></script>
+    
+
+</head>
+<body>
+    <div id="sidebar">
+        <img id="logo" src="logo.svg" alt="Weeg Logo">
+
+        <div class="icon">🏠</div>
+        <div class="icon">🔔</div>
+        <div class="icon">👤</div>
+    </div>
+    <div id="main-content">
+        <div id="chat">
+            
+        </div>
+        <div id="input-area">
+            <input type="text" id="messageInput" class="input-field" placeholder="Type your message here...">
+            <button>Send</button>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const md = markdownit();
+            const chat = document.getElementById('chat');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.querySelector('button'); // Assuming there's only one button
+    
+            // Define sendMessage within the DOMContentLoaded listener
+            async function sendMessage() {
+                const userMessage = messageInput.value.trim();
+                if (userMessage) {
+                    displayMessage(userMessage, 'user');
+                    messageInput.value = '';
+    
+                    try {
+                        const response = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ userMessage }) // sessionId is used here
+                        });
+    
+                        const { aiMessage } = await response.json();
+                        displayMessage(aiMessage, 'ai');
+                    } catch (error) {
+                        console.error('Error during API request:', error);
+                    }
+                }
+            }
+    
+            // Attach the sendMessage function to the click event of the send button
+            sendButton.addEventListener('click', sendMessage);
+    
+            // Function to display messages (existing code)
+            function displayMessage(content, role) {
+                const msgDiv = document.createElement('div');
+                msgDiv.classList.add('message');
+
+                // Use markdown-it for Markdown rendering
+                let renderedContent = md.render(content);
+                msgDiv.innerHTML = renderedContent;
+
+                // Now use KaTeX to render any LaTeX within the rendered Markdown
+                renderMathInElement(msgDiv, {
+                    // KaTeX rendering options
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "\\[", right: "\\]", display: true},
+                        {left: "$", right: "$", display: false},
+                        {left: "\\(", right: "\\)", display: false}
+                    ],
+                    // This option will run KaTeX's auto-render after markdown-it's render
+                    throwOnError: false
+                });
+
+                if(role === 'user') {
+                    msgDiv.classList.add('you');
+                } else {
+                    msgDiv.classList.add('ai');
+                }
+
+                chat.appendChild(msgDiv);
+                chat.scrollTop = chat.scrollHeight;
+            }
+    
+            // Listen for "Enter" to send the message (existing code)
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault(); // Prevent the default action to stop form submission
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+    
+    
+</body>
+
+</html>
