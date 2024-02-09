@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>weeg</title>
+    <style>
+        body, html {
+            font-family: 'Arial', sans-serif;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        #sidebar {
+            width: 50px;
+            background-color: #800080;
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #logo {
+        
+            width: 40px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        .icon {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            color: #800080;
+            cursor: pointer;
+        }
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: calc(100vw - 50px);
+        }
+        #chat {
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            height: 100%;
+            overflow-y: auto;
+            margin: 10px;
+            margin-bottom: 0px;
+        }
+        .message {
+            display: inline-block;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 15px;
+            background-color: #eee;
+            margin-right: 10px;
+            max-width: 80%;
+        }
+        .message.you {
+            background-color: #ddd;
+            align-self: flex-end;
+        }
+        .message.ai {
+            background-color: #800080;
+            align-self: flex-start;
+            color: #fff;
+        }
+        #input-area {
+            display: flex;
+        }
+        .input-field {
+            flex-grow: 1; 
+            padding: 10px;
+            margin: 10px;
+            width: 85%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            width: 10%;
+            background-color: #800080;
+            margin: 10px;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <img id="logo" src="logo.svg" alt="Weeg Logo">
+
+        <div class="icon">🏠</div>
+        <div class="icon">🔔</div>
+        <div class="icon">👤</div>
+    </div>
+    <div id="main-content">
+        <div id="chat">
+            
+        </div>
+        <div id="input-area">
+            <input type="text" id="messageInput" class="input-field" placeholder="Type your message here...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <script>
+        const chat = document.getElementById('chat');
+        const messageInput = document.getElementById('messageInput');
+        const ws = new WebSocket('ws://' + window.location.hostname + '/ws');
+
+        ws.onmessage = function(event) {
+            displayMessage(event.data, 'ai');
+        };
+        window.onload = function() {
+            displayMessage('Hello! I\'m your personal AI Tutor :)', 'ai');
+            displayMessage('How can I help you today?', 'ai');
+        };
+
+        function displayMessage(msg, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.textContent = msg;
+            msgDiv.classList.add('message');
+            if(sender === 'ai') {
+                msgDiv.classList.add('ai');
+            } else {
+                msgDiv.classList.add('you');
+            }
+            chat.appendChild(msgDiv);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                ws.send(message);
+            
+                displayMessage('You: ' + message, 'you');
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
