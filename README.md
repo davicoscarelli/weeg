@@ -1,10 +1,10 @@
-# The Hive Product README
+# Weeg
 
-Welcome to the updated README for The Hive, a pioneering educational platform engineered to close the digital education gap through innovative Mesh Network technology. Given the constraints of a purely hardware-based operation for our official setup, this document aims to guide users through understanding and evaluating The Hive platform and its underlying technology within a controlled software simulation.
+Welcome to the updated README for Weeg, a pioneering educational platform engineered to close the digital education gap through innovative Mesh Network technology. Given the constraints of a purely hardware-based operation for our official setup, this document aims to guide users through understanding and evaluating The Hive platform and its underlying technology within a controlled software simulation.
 
 ## 1. Package Overview
 
-Included in The Hive's submission package, you will find:
+Included in Weeg's submission package, you will find:
 
 - **The Hive Online:** A web application simulating The Hive's educational platform, optimized for a controlled environment on internet to showcase its AI-driven personalized learning experiences.
 - **MeshNetwork Firmware:** The source code for our Mesh Network's firmware, showcasing the technology behind our innovative networking solution. Please note that this firmware is intended for hardware applications and is provided for code review and understanding of the Mesh Network's operational principles.
