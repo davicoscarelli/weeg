@@ -17,33 +17,31 @@ app.post('/api/chat', async (req, res) => {
 
     try {
         if (!conversations[sessionId]) {
-            conversations[sessionId] = [
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant."
-                }
-            ];
+            conversations[sessionId] = [];
         }
 
         const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-        const chat = model.startChat({
-            history: conversations[sessionId],
-            generationConfig: {
-                maxOutputTokens: 100,
-            },
-        });
+        const result = await model.generateContent([
+            ...conversations[sessionId], // Include all historical messages
+            {
+                role: "user",
+                parts: [{ text: userMessage }]
+            }
+        ]);
 
-        const result = await chat.sendMessage(userMessage);
         const response = await result.response;
-        const aiMessage = await response.text();
+        const aiMessage = response.text();
+        console.log(aiMessage)
 
+        // Add user's message to the conversation history
         conversations[sessionId].push({
             "role": "user",
             "content": userMessage
         });
 
+        // Add AI's response to the conversation history
         conversations[sessionId].push({
             "role": "assistant",
             "content": aiMessage
@@ -55,6 +53,7 @@ app.post('/api/chat', async (req, res) => {
         res.status(500).send('Error calling Gemini');
     }
 });
+
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

@@ -97,20 +97,6 @@
             color: white;
             cursor: pointer;
         }
-        .button-link {
-            display: inline-block;
-            padding: 10px 15px;
-            background-color: #ad37ad;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        /* You might want to add :hover and :active pseudo-classes for better interactivity */
-        .button-link:hover {
-            background-color: #ab4bab;
-        }
     </style>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
@@ -139,86 +125,43 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            conversations = [
-                {
-                    "role": "ai",
-                    "content": "Welcome! Let's dive into some algebra. Are you ready?"
-                },
-                {
-                    "role": "user",
-                    "content": "Yes, I need help with solving equations."
-                },
-                {
-                    "role": "ai",
-                    "content": "No problem! Let's start with linear equations. Can you solve this one? \n$$2x + 3 = 15$$"
-                }
-                // Add more conversations as needed
-            ];
-
-            
-            const md = markdownit({
-                breaks: true, // Convert newlines in paragraphs into <br>
-            });
+            const md = markdownit();
             const chat = document.getElementById('chat');
             const messageInput = document.getElementById('messageInput');
             const sendButton = document.querySelector('button'); // Assuming there's only one button
-
-            // Display predefined messages
-            conversations.forEach(convo => {
-                displayMessage(convo.content, convo.role);
-            });
     
             // Define sendMessage within the DOMContentLoaded listener
             async function sendMessage() {
                 const userMessage = messageInput.value.trim();
-
-                
-
                 if (userMessage) {
-                    conversations.push({
-                        "role": "user",
-                        "content": userMessage
-                    });
                     displayMessage(userMessage, 'user');
                     messageInput.value = '';
-
-                    // Check for specific user messages and respond accordingly
-                    if(userMessage.includes("x = 6")) {
-                        // User correctly solved the equation, move onto a more complex problem
-                        setTimeout(function() {
-                            let aiResponse = "Exactly! Now, let's try something a bit more challenging. How about this one? \n\n$$x^2 + 5x + 6 = 0$$";
-                            displayMessage(aiResponse, 'ai');
-                        }, 2000); // Adding a delay for realism
-                    } else if (userMessage.includes("Can you explain")) {
-                        // User asks for an explanation, show the tutorial button
-                        setTimeout(function() {
-                            let aiResponse = "Sure, solving quadratic equations can be a bit more complex.  \n\nHere's a quick guide for you:  \n\n[Click here to view the tutorial](/tutorial.html)";
-                            displayMessage(aiResponse, 'ai');
-                        }, 2000);
-                    } else {
-                        // For any other user input, you might want to handle differently
-                        setTimeout(function() {
-                            displayMessage("Hmm, I'm not sure about that. Could you try rephrasing your question?", 'ai');
-                        }, 2000);
-                    }
     
-                   
+                    try {
+                        const response = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ userMessage }) // sessionId is used here
+                        });
+    
+                        const { aiMessage } = await response.json();
+                        displayMessage(aiMessage, 'ai');
+                    } catch (error) {
+                        console.error('Error during API request:', error);
+                    }
                 }
             }
     
+            // Attach the sendMessage function to the click event of the send button
             sendButton.addEventListener('click', sendMessage);
     
-            function displayMessage(response, role) {
+            // Function to display messages (existing code)
+            function displayMessage(content, role) {
                 const msgDiv = document.createElement('div');
                 msgDiv.classList.add('message');
-                
-                let content = response
 
-                console.log(content)
-                if (response.choices) content = response.choices[0].message.content
-                
-
-                console.log(content, role)
                 // Use markdown-it for Markdown rendering
                 let renderedContent = md.render(content);
                 msgDiv.innerHTML = renderedContent;
@@ -241,11 +184,6 @@
                 } else {
                     msgDiv.classList.add('ai');
                 }
-                if(role === 'ai') {
-                    // Look for links in the AI's message and apply the button style
-                    const links = msgDiv.querySelectorAll('a');
-                    links.forEach(link => link.classList.add('button-link'));
-                }
 
                 chat.appendChild(msgDiv);
                 chat.scrollTop = chat.scrollHeight;
@@ -259,8 +197,6 @@
                 }
             });
         });
-
-        
     </script>
     
     
