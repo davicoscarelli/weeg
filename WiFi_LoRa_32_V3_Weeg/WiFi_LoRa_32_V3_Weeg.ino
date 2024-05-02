@@ -124,10 +124,8 @@ void setupServer()
 
 const char *askGemini(const String &question)
 {
-    if (!chatHistory.containsKey("model"))
-    {
-        chatHistory["model"] = "gpt-3.5-turbo";
-    }
+    DynamicJsonDocument requestBodyDoc(4096);
+    JsonArray contents = requestBodyDoc.createNestedArray("contents");
 
     // User message
     JsonObject userMessage = contents.createNestedObject();
