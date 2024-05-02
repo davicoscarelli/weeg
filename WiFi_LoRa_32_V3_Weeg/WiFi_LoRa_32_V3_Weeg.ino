@@ -40,7 +40,7 @@ char Repacket[BUFFER_SIZE];
 char serialData[BUFFER_SIZE];
 char lastResponse[BUFFER_SIZE];
 
-const char *apiKey = "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";
+const char *apiKey = "AIzaSyAQIVKrYAJdtp00GQJ2qFF17y5PVXAXPko";
 
 StaticJsonDocument<8192> chatHistory;
 JsonArray messages = chatHistory.createNestedArray("messages");
@@ -122,24 +122,33 @@ void setupServer()
     server.addHandler(&ws);
 }
 
-const char *askOpenAI(const String &question)
+const char *askGemini(const String &question)
 {
     if (!chatHistory.containsKey("model"))
     {
         chatHistory["model"] = "gpt-3.5-turbo";
     }
 
-    JsonObject userMessage = messages.createNestedObject();
+    // User message
+    JsonObject userMessage = contents.createNestedObject();
     userMessage["role"] = "user";
-    userMessage["content"] = question;
+    JsonArray userParts = userMessage.createNestedArray("parts");
+    JsonObject userText = userParts.createNestedObject();
+    userText["text"] = question;
+
+    // Model message
+    JsonObject modelMessage = contents.createNestedObject();
+    modelMessage["role"] = "model";
+    JsonArray modelParts = modelMessage.createNestedArray("parts");
+    JsonObject modelText = modelParts.createNestedObject();
+    modelText["text"] = "Placeholder text";
 
     String requestBody;
-    serializeJson(chatHistory, requestBody);
+    serializeJson(requestBodyDoc, requestBody);
 
     HTTPClient http;
-    http.begin("https://api.openai.com/v1/chat/completions");
+    http.begin("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + String(apiKey));
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("Authorization", "Bearer " + String(apiKey));
 
     Serial.println("Request Body:");
     Serial.println(requestBody);
@@ -154,9 +163,9 @@ const char *askOpenAI(const String &question)
 
         DynamicJsonDocument responseDoc(4096);
         deserializeJson(responseDoc, response);
-        if (responseDoc.containsKey("choices"))
+        if (responseDoc.containsKey("text"))
         {
-            strncpy(responseBuffer, responseDoc["choices"][0]["message"]["content"], responseBufferSize - 1);
+            strncpy(responseBuffer, responseDoc["text"], responseBufferSize - 1);
             responseBuffer[responseBufferSize - 1] = '\0';
 
             JsonObject aiMessage = messages.createNestedObject();
@@ -165,7 +174,7 @@ const char *askOpenAI(const String &question)
         }
         else
         {
-            strncpy(responseBuffer, "Failed to parse OpenAI response.", responseBufferSize - 1);
+            strncpy(responseBuffer, "Failed to parse Gemini response.", responseBufferSize - 1);
             responseBuffer[responseBufferSize - 1] = '\0';
         }
     }
@@ -181,6 +190,7 @@ const char *askOpenAI(const String &question)
     http.end();
     return responseBuffer;
 }
+
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
                void *arg, uint8_t *data, size_t len)
@@ -366,7 +376,7 @@ void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
         if (strlen(rxpacket) > 0 && strstr(rxpacket, "connected") == NULL)
         {
 
-            const char *response = askOpenAI(rxpacket);
+            const char *response = askGemini(rxpacket);
             Serial.println(response);
 
             strcpy(serialData, response);

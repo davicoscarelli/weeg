@@ -3,7 +3,9 @@ const app = express();
 const path = require('path');
 require('dotenv').config();
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const GOOGLE_API_KEY = "AIzaSyAQIVKrYAJdtp00GQJ2qFF17y5PVXAXPko";
+
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 let conversations = {};
 
@@ -13,40 +15,35 @@ app.use(express.static('public'));
 app.post('/api/chat', async (req, res) => {
     const { sessionId, userMessage } = req.body;
 
-
-    if (!conversations[sessionId]) {
-        conversations[sessionId] = [
-            {
-                "role": "system",
-                "content": "You are a helpful assistant."
-            }
-        ];
-    }
-
-
-    conversations[sessionId].push({
-        "role": "user",
-        "content": userMessage
-    });
-
     try {
-        const fetch = (await import('node-fetch')).default;
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_API_KEY}`
+        if (!conversations[sessionId]) {
+            conversations[sessionId] = [
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant."
+                }
+            ];
+        }
+
+        const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+        const chat = model.startChat({
+            history: conversations[sessionId],
+            generationConfig: {
+                maxOutputTokens: 100,
             },
-            body: JSON.stringify({
-                model: "gpt-3.5-turbo",
-                messages: conversations[sessionId]
-            })
         });
 
-        const data = await response.json();
+        const result = await chat.sendMessage(userMessage);
+        const response = await result.response;
+        const aiMessage = await response.text();
 
-    
-        const aiMessage = data.choices[0].message.content;
+        conversations[sessionId].push({
+            "role": "user",
+            "content": userMessage
+        });
+
         conversations[sessionId].push({
             "role": "assistant",
             "content": aiMessage
@@ -54,8 +51,8 @@ app.post('/api/chat', async (req, res) => {
 
         res.json({ aiMessage });
     } catch (error) {
-        console.error('Error calling OpenAI:', error);
-        res.status(500).send('Error calling OpenAI');
+        console.error('Error calling Gemini:', error);
+        res.status(500).send('Error calling Gemini');
     }
 });
 
